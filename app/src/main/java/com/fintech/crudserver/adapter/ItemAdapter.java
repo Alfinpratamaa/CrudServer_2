@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,11 +19,14 @@ import com.fintech.crudserver.model.Item;
 import java.util.ArrayList;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder> {
-    private final ArrayList<Item> listItems = new ArrayList<>();
-    private final Context context;
 
-    public ItemAdapter(Context context) {
+    private ArrayList<Item> listItems = new ArrayList<>();
+    private Context context;
+    private OnItemDeleteListener deleteListener;
+
+    public ItemAdapter(Context context, OnItemDeleteListener deleteListener) {
         this.context = context;
+        this.deleteListener = deleteListener;
     }
 
     @NonNull
@@ -41,7 +45,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         holder.tvBrand.setText(currentItem.getBrand());
         holder.tvPrice.setText(String.valueOf(currentItem.getPrice()));
 
-        holder.cvItem.setOnClickListener(new View.OnClickListener() {
+        holder.editBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 int itemPosition = holder.getAdapterPosition();
@@ -54,6 +58,20 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 }
             }
         });
+
+        holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int itemPosition = holder.getAdapterPosition();
+                if (itemPosition != RecyclerView.NO_POSITION) {
+                    Item item = listItems.get(itemPosition);
+                    if (deleteListener != null) {
+                        deleteListener.onItemDelete(item.getId());
+                    }
+                }
+            }
+        });
+
     }
 
     public void setListItems(ArrayList<Item> items) {
@@ -69,14 +87,21 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     public class ItemViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvBrand, tvPrice;
-        CardView cvItem;
+        ImageButton editBtn, deleteBtn;
+        CardView cView;
 
         public ItemViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tv_name);
             tvBrand = itemView.findViewById(R.id.tv_brand);
             tvPrice = itemView.findViewById(R.id.tv_price);
-            cvItem = itemView.findViewById(R.id.cv_item);
+            editBtn = itemView.findViewById(R.id.editBtn);
+            deleteBtn = itemView.findViewById(R.id.deleteBtn);
+            cView = itemView.findViewById(R.id.cv_item);
         }
+    }
+
+    public interface OnItemDeleteListener {
+        void onItemDelete(int itemId);
     }
 }

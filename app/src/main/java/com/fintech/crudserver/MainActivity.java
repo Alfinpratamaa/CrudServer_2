@@ -28,14 +28,14 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ItemAdapter.OnItemDeleteListener {
 
     private RecyclerView rvItem;
     private FloatingActionButton fabAdd;
 
-    ArrayList<Item> items = new ArrayList<Item>();
+    private ArrayList<Item> items = new ArrayList<>();
 
-
+    private ItemAdapter itemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,32 +51,20 @@ public class MainActivity extends AppCompatActivity {
         fabAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(
-                        MainActivity.this,
-                        AddAndUpdateActivity.class);
-
+                Intent intent = new Intent(MainActivity.this, AddAndUpdateActivity.class);
                 startActivity(intent);
-
             }
         });
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        if (isConnected) {
-            Toast.makeText(MainActivity.this,
-                    "connect", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(MainActivity.this,
-                    "disconnect", Toast.LENGTH_LONG).show();
-        }
-    }
 
+        itemAdapter = new ItemAdapter(this, this);
+        rvItem.setAdapter(itemAdapter);
+
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadAllData();
-
     }
 
     public void loadAllData() {
@@ -88,43 +76,68 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(Constants.URL_API)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        Log.d("Percobaan","loadAll : ");
 
         APIService apiService = retrofit.create(APIService.class);
-
         final Call<Result> result = apiService.getAll(Constants.TOKEN);
-
-
 
         result.enqueue(new Callback<Result>() {
             @Override
             public void onResponse(Call<Result> call, Response<Result> response) {
                 progressDialog.dismiss();
-                Log.d("Percobaan body : ", response.toString());
-
                 Result jsonResult = response.body();
 
                 items = jsonResult.getItems();
 
-                ItemAdapter itemAdapter = new ItemAdapter(MainActivity.this);
-
-                rvItem.setAdapter(itemAdapter);
-
                 if (items != null) {
                     itemAdapter.setListItems(items);
                 }
-
-
             }
 
             @Override
             public void onFailure(Call<Result> call, Throwable t) {
                 progressDialog.dismiss();
-                Log.d("Percobaan","loadAll onFailure: "+t.getMessage());
-
+                Log.d("Percobaan", "loadAll onFailure: " + t.getMessage());
             }
         });
+    }
+
+    public void deleteItem(int id) {
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Please wait ...");
+        progressDialog.show();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.URL_API)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        APIService apiService = retrofit.create(APIService.class);
+
+        Call<Result> result = apiService.delete(Constants.TOKEN, id);
+
+        result.enqueue(new Callback<Result>() {
+            @Override
+            public void onResponse(Call<Result> call, Response<Result> response) {
+                progressDialog.dismiss();
+                Result jsonResult = response.body();
+
+                Toast.makeText(MainActivity.this, jsonResult.getMessage(), Toast.LENGTH_LONG).show();
+
+                loadAllData(); // Refresh the list after deleting an item
+            }
+
+            @Override
+            public void onFailure(Call<Result> call, Throwable t) {
+                progressDialog.dismiss();
+                Toast.makeText(MainActivity.this, "Failed to delete item!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
 
+
+    @Override
+    public void onItemDelete(int itemId) {
+        deleteItem(itemId);
     }
 }

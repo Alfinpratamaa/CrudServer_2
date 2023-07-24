@@ -55,6 +55,7 @@ public class AddAndUpdateActivity extends AppCompatActivity {
 
         btnSubmit = findViewById(R.id.btn_submit);
 
+        // proses menekan button submit(simpan)
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -100,7 +101,7 @@ public class AddAndUpdateActivity extends AppCompatActivity {
 
 
     }
-
+    // proses tambah data baru
     private void addNewData() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("New data");
@@ -154,6 +155,7 @@ public class AddAndUpdateActivity extends AppCompatActivity {
 
     }
 
+    // peroses edit data
     private void editData() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Please wait ...");
